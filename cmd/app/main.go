@@ -22,7 +22,7 @@ func main() {
 	log.Debug("logger debug mode enabled")
 
 	// TODO: replace with a single function
-	connStr := fmt.Sprintf("user=%s dbname=%s password=%s host=%s sslmode=%s", cfg.DB.Host, cfg.DB.Username, cfg.DB.DBName, cfg.DB.Password, cfg.DB.Host, cfg.DB.SSLMode)
+	connStr := fmt.Sprintf("user=%s dbname=%s password=%s host=%s sslmode=%s", cfg.DB.Username, cfg.DB.DBName, cfg.DB.Password, cfg.DB.Host, cfg.DB.SSLMode)
 	db, err := sql.Open("postgres", connStr)
 
 	if err != nil {
