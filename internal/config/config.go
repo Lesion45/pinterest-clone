@@ -9,9 +9,9 @@ import (
 )
 
 type Config struct {
-	Env string `yaml:"env" env-default:"local"`
-	// StoragePath string     `yaml:"storage-path" env-required:"true"`
-	Server HTTPServer `yaml:"http-serever"`
+	Env         string     `yaml:"env" env-default:"local"`
+	StoragePath string     `yaml:"storage-path" env-required:"true"`
+	Server      HTTPServer `yaml:"http-serever"`
 }
 
 type HTTPServer struct {

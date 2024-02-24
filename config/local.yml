@@ -1,4 +1,5 @@
 env: "local" # options: local dev prod
+storage-path: "C:/Users/maus1/Desktop/url-shortener/storage/storage.db"
 
 http-server:
   address: "localhost:5000"
