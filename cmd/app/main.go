@@ -1,10 +1,8 @@
 package main
 
 import (
-	"database/sql"
 	"github.com/gorilla/mux"
 	"github.com/lesion45/pinterest-clone/internal/config"
-	"github.com/lesion45/pinterest-clone/internal/lib/logger/sl"
 	_ "github.com/lib/pq"
 	"log/slog"
 	"net/http"
@@ -19,21 +17,21 @@ func main() {
 
 	log.Info("initializing server", slog.String("address", cfg.Server.Address))
 	log.Debug("logger debug mode enabled")
+	/*
+		db, err := sql.Open("postgres", cfg.StoragePath)
 
-	db, err := sql.Open("postgres", cfg.StoragePath)
+		if err != nil {
+			log.Error("failed to initialize storage", sl.Err(err))
+			os.Exit(1)
+		}
+		defer db.Close()
 
-	if err != nil {
-		log.Error("failed to initialize storage", sl.Err(err))
-		os.Exit(1)
-	}
-	defer db.Close()
-
-	err = db.Ping()
-	if err != nil {
-		log.Error("storage doesn't response", sl.Err(err))
-		os.Exit(1)
-	}
-
+		err = db.Ping()
+		if err != nil {
+			log.Error("storage doesn't response", sl.Err(err))
+			os.Exit(1)
+		}
+	*/
 	router := mux.NewRouter()
 
 	server := &http.Server{
