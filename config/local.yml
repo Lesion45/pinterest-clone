@@ -1,5 +1,12 @@
 env: "local" # options: local dev prod
-storage-path: "C:/Users/maus1/Desktop/url-shortener/storage/storage.db"
+
+storage:
+  username: "postgres"
+  host: "db"
+  port: "5436"
+  password: "admin"
+  dbname: "postgres"
+  sslmode: "disable"
 
 http-server:
   address: "localhost:5000"
