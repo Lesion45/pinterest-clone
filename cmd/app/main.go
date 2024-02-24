@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
 	"github.com/lesion45/pinterest-clone/internal/config"
 	"log/slog"
 	"net/http"
@@ -17,7 +17,7 @@ func main() {
 	log.Info("initializing server", slog.String("address", cfg.Server.Address))
 	log.Debug("logger debug mode enabled")
 
-	router := mux.NewRouter()
+	router := chi.NewRouter()
 
 	server := &http.Server{
 		Addr:         cfg.Server.Address,
