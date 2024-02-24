@@ -1,0 +1,6 @@
+env: "local" # options: local dev prod
+
+http-server:
+  address: "localhost:5000"
+  timeout: 10s
+  idle-timeout: 60s
