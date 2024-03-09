@@ -2,9 +2,11 @@ package postgres
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"github.com/lesion45/pinterest-clone/internal/config"
 	"github.com/lesion45/pinterest-clone/internal/lib/logger/sl"
+	"github.com/lesion45/pinterest-clone/storage/models"
 	"log/slog"
 )
 
@@ -46,17 +48,112 @@ func NewStorage(cfg config.Config, log slog.Logger) (*Storage, error) {
 	return &Storage{db: db}, nil
 }
 
-func (s *Storage) createPin(imgURL, username string) error {
+//
+// PIN Table
+// pin_id(primary key), image_url, username(reference to User Table)
+//
+
+func (s *Storage) CreatePin(imgURL string, username string) error {
+	const op = "storage.postgres.createPin"
+
 	stmt := "INSERT INTO pins (imgURL, username) VALUES ($1, $2)"
 
 	_, err := s.db.Exec(stmt, imgURL, username)
 	if err != nil {
-		return err
+		return fmt.Errorf("%s: %w", op, err)
 	}
 
 	return nil
 }
 
-func (s *Storage) getPin(id int) (int, error) {
-	return 1, nil
+func (s *Storage) GetPin(id int) (*models.Pin, error) {
+	const op = "storage.postgres.GetPin"
+	pin := &models.Pin{}
+
+	stmt := "SELECT pin_id, image_url, username FROM pins WHERE pin_id = $1"
+
+	row := s.db.QueryRow(stmt, id)
+
+	err := row.Scan(&pin.ID, &pin.ImageURL, &pin.Username)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, models.ErrPinNotFound
+		}
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+	return pin, nil
 }
+
+func (s *Storage) DeletePin(id int) error {
+	const op = "storage.postgres.DeletePin"
+
+	stmt := "DELETE from pins WHERE pin_id = $1"
+
+	_, err := s.db.Exec(stmt, id)
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	return nil
+}
+
+func (s *Storage) GetAllPins() ([]*models.Pin, error) {
+	const op = "storage.postgres.GetAllPins"
+
+	stmt := "SELECT pin_id, image_url, username FROM pins"
+
+	rows, err := s.db.Query(stmt)
+	defer rows.Close()
+
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+
+	pins := make([]*models.Pin, 0)
+
+	for rows.Next() {
+		pin := &models.Pin{}
+
+		err := rows.Scan(&pin.ID, &pin.ImageURL, &pin.Username)
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", op, err)
+		}
+
+		pins = append(pins, pin)
+	}
+
+	return pins, nil
+}
+
+func (s *Storage) GetAllPinsFromUser(username string) ([]*models.Pin, error) {
+	const op = "storage.postgres.GetAllPinsFromUser"
+
+	stmt := "SELECT pin_id, image_url, username FROM pins WHERE user_name = $1"
+
+	rows, err := s.db.Query(stmt, username)
+	defer rows.Close()
+
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+
+	pins := make([]*models.Pin, 0)
+
+	for rows.Next() {
+		pin := &models.Pin{}
+
+		err := rows.Scan(&pin.ID, &pin.ImageURL, &pin.Username)
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", op, err)
+		}
+
+		pins = append(pins, pin)
+	}
+
+	return pins, nil
+}
+
+//
+// User Table
+// user_id, username, password(encrypted)
+//
