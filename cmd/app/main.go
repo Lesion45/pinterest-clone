@@ -1,16 +1,23 @@
 package main
 
 import (
-	"database/sql"
-	"fmt"
-	"github.com/gorilla/mux"
+	"github.com/gin-gonic/gin"
 	"github.com/lesion45/pinterest-clone/internal/config"
+	rts "github.com/lesion45/pinterest-clone/internal/http-server/routes"
 	"github.com/lesion45/pinterest-clone/internal/lib/logger/sl"
+	"github.com/lesion45/pinterest-clone/storage/postgres"
 	_ "github.com/lib/pq"
 	"log/slog"
 	"net/http"
 	"os"
 )
+
+type App struct {
+	server  *http.Server
+	router  *gin.Engine
+	storage *postgres.Storage
+	log     *slog.Logger
+}
 
 func main() {
 	cfg := config.MustLoad()
@@ -21,23 +28,20 @@ func main() {
 	log.Info("initializing server", slog.String("address", cfg.Server.Address))
 	log.Debug("logger debug mode enabled")
 
-	// TODO: replace with a single function
-	connStr := fmt.Sprintf("user=%s dbname=%s password=%s host=%s sslmode=%s", cfg.DB.Username, cfg.DB.DBName, cfg.DB.Password, cfg.DB.Host, cfg.DB.SSLMode)
-	db, err := sql.Open("postgres", connStr)
-
+	_, err := postgres.NewStorage(*cfg, *log)
 	if err != nil {
-		log.Error("failed to initialize storage", sl.Err(err))
+		log.Error("database initialization error", sl.Err(err))
 		os.Exit(1)
 	}
-	defer db.Close()
+	log.Info("Storage is active")
 
-	err = db.Ping()
-	if err != nil {
-		log.Error("storage doesn't response", sl.Err(err))
+	router := gin.Default()
+
+	routes := rts.AddRoutes(router)
+	if routes == nil {
+		log.Error("Routes error", sl.Err(err))
 		os.Exit(1)
 	}
-
-	router := mux.NewRouter()
 
 	server := &http.Server{
 		Addr:         cfg.Server.Address,
