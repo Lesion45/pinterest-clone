@@ -7,6 +7,7 @@ import (
 	"github.com/lesion45/pinterest-clone/internal/config"
 	"github.com/lesion45/pinterest-clone/internal/lib/logger/sl"
 	"github.com/lesion45/pinterest-clone/storage/models"
+	"golang.org/x/crypto/bcrypt"
 	"log/slog"
 )
 
@@ -128,7 +129,7 @@ func (s *Storage) GetAllPins() ([]*models.Pin, error) {
 func (s *Storage) GetAllPinsFromUser(username string) ([]*models.Pin, error) {
 	const op = "storage.postgres.GetAllPinsFromUser"
 
-	stmt := "SELECT pin_id, image_url, username FROM pins WHERE user_name = $1"
+	stmt := "SELECT pin_id, image_url, username FROM pins WHERE username = $1"
 
 	rows, err := s.db.Query(stmt, username)
 	defer rows.Close()
@@ -157,3 +158,61 @@ func (s *Storage) GetAllPinsFromUser(username string) ([]*models.Pin, error) {
 // User Table
 // user_id, username, password(encrypted)
 //
+
+// TODO: ADD USER
+func (s *Storage) AddUser(username string, password string) error {
+	const op = "storage.postgres.AddUser"
+
+	passwordHash, err := bcrypt.GenerateFromPassword([]byte(password), 12)
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	stmt := "INSERT INTO users (username, passwordHash) VALUES ($1, $2)"
+
+	_, err = s.db.Exec(stmt, username, passwordHash)
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	return nil
+}
+
+func (s *Storage) ValidatePassword(username string, password string) error {
+	const op = "storage.postgres.ValidatePassword"
+
+	user, err := s.GetUser(username)
+	if err != nil {
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	err = bcrypt.CompareHashAndPassword(user.Password, []byte(password))
+	if err != nil {
+		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
+			return models.ErrInvalidPassword
+		}
+		return fmt.Errorf("%s: %w", op, err)
+	}
+
+	return nil
+}
+
+func (s *Storage) GetUser(username string) (*models.User, error) {
+	const op = "storage.postgres.GetUser"
+
+	user := &models.User{}
+
+	stmt := "SELECT username, password FROM users WHERE username = $1"
+
+	row := s.db.QueryRow(stmt, username)
+
+	err := row.Scan(&user.Nickname, &user.Password)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, models.ErrUserNotFound
+		}
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+
+	return user, nil
+}
