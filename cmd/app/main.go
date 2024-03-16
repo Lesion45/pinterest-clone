@@ -28,7 +28,7 @@ func main() {
 	log.Info("initializing server", slog.String("address", cfg.Server.Address))
 	log.Debug("logger debug mode enabled")
 
-	_, err := postgres.NewStorage(*cfg, *log)
+	storage, err := postgres.NewStorage(*cfg, *log)
 	if err != nil {
 		log.Error("database initialization error", sl.Err(err))
 		os.Exit(1)
@@ -37,7 +37,7 @@ func main() {
 
 	router := gin.Default()
 
-	routes := rts.AddRoutes(router)
+	routes := rts.AddRoutes(router, log, storage)
 	if routes == nil {
 		log.Error("Routes error", sl.Err(err))
 		os.Exit(1)

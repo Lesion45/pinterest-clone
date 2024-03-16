@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/lesion45/pinterest-clone/internal/config"
 	"github.com/lesion45/pinterest-clone/internal/lib/logger/sl"
+	"github.com/lesion45/pinterest-clone/storage"
 	"github.com/lesion45/pinterest-clone/storage/models"
 	"golang.org/x/crypto/bcrypt"
 	"log/slog"
@@ -78,7 +79,7 @@ func (s *Storage) GetPin(id int) (*models.Pin, error) {
 	err := row.Scan(&pin.ID, &pin.ImageURL, &pin.Username)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, models.ErrPinNotFound
+			return nil, storage.ErrPinNotFound
 		}
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
@@ -168,7 +169,7 @@ func (s *Storage) AddUser(username string, password string) error {
 		return fmt.Errorf("%s: %w", op, err)
 	}
 
-	stmt := "INSERT INTO users (username, passwordHash) VALUES ($1, $2)"
+	stmt := "INSERT INTO users (username, password) VALUES ($1, $2)"
 
 	_, err = s.db.Exec(stmt, username, passwordHash)
 	if err != nil {
@@ -189,7 +190,7 @@ func (s *Storage) ValidatePassword(username string, password string) error {
 	err = bcrypt.CompareHashAndPassword(user.Password, []byte(password))
 	if err != nil {
 		if errors.Is(err, bcrypt.ErrMismatchedHashAndPassword) {
-			return models.ErrInvalidPassword
+			return storage.ErrInvalidPassword
 		}
 		return fmt.Errorf("%s: %w", op, err)
 	}
@@ -209,7 +210,7 @@ func (s *Storage) GetUser(username string) (*models.User, error) {
 	err := row.Scan(&user.Nickname, &user.Password)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, models.ErrUserNotFound
+			return nil, storage.ErrUserNotFound
 		}
 		return nil, fmt.Errorf("%s: %w", op, err)
 	}
