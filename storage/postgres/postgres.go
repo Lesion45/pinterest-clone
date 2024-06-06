@@ -50,12 +50,9 @@ func NewStorage(cfg config.Config, log slog.Logger) (*Storage, error) {
 	return &Storage{db: db}, nil
 }
 
-//
 // PIN Table
 // pin_id(primary key), image_url, username(reference to User Table)
-//
-
-func (s *Storage) CreatePin(imgURL string, username string) error {
+func (s *Storage) AddPin(username string, imgURL string) error {
 	const op = "storage.postgres.createPin"
 
 	stmt := "INSERT INTO pins (imgURL, username) VALUES ($1, $2)"
@@ -86,7 +83,7 @@ func (s *Storage) GetPin(id int) (*models.Pin, error) {
 	return pin, nil
 }
 
-func (s *Storage) DeletePin(id int) error {
+func (s *Storage) DeletePin(id string) error {
 	const op = "storage.postgres.DeletePin"
 
 	stmt := "DELETE from pins WHERE pin_id = $1"
@@ -155,12 +152,8 @@ func (s *Storage) GetAllPinsFromUser(username string) ([]*models.Pin, error) {
 	return pins, nil
 }
 
-//
 // User Table
 // user_id, username, password(encrypted)
-//
-
-// TODO: ADD USER
 func (s *Storage) AddUser(username string, password string) error {
 	const op = "storage.postgres.AddUser"
 
